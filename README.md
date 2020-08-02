@@ -13,7 +13,7 @@ python3 ~/mirror-automator/update-mirror.py java maven
 
 |   | Mac | Linux | Windows |
 |:-:|:---------:|-------------|-------------|
-| `java maven`   | ✅    | 🚧     | 🚧     |
+| `java maven`   | ✅    | ✅     | 🚧     |
 | `java gradle`  | 🚧    | 🚧     | 🚧     |
 
 ## 贡献与反馈

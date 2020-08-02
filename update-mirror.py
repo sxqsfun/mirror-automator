@@ -5,7 +5,7 @@ import os
 import platform
 import tempfile
 import xml.etree.ElementTree as ET
-from xml.etree.ElementTree import SubElement
+from xml.etree.ElementTree import SubElement, Element
 
 def print_diff(s1: str, s2: str):
     import difflib
@@ -18,11 +18,18 @@ def xml_to_str(root):
 
 def process_java_maven():
     maven_conf_path = os.getenv("HOME") + "/.m2/settings.xml"
-    assert os.path.exists(maven_conf_path), f"Maven 配置文件 {maven_conf_path} 不存在"
-    tree = ET.parse(maven_conf_path)
-    root = tree.getroot()
-    assert root.tag == "settings"
-    mirrors = root.find("mirrors")
+    exists_settings = True
+    if not os.path.exists(maven_conf_path):
+        print(f"Maven 配置文件 {maven_conf_path} 不存在，创建默认配置")
+        root = Element("settings")
+        mirrors = SubElement(root, "mirrors")
+        exists_settings = False
+    else:
+        tree = ET.parse(maven_conf_path)
+        root = tree.getroot()
+        assert root.tag == "settings"
+        mirrors = root.find("mirrors")
+
     existing_mirrors = {}
     maven_aliyun = "https://maven.aliyun.com/repository/public"
     updated = False
@@ -55,26 +62,29 @@ def process_java_maven():
         updated = True
 
     if updated:
-        print(f"===`======= 是否按如下 diff 更新 {maven_conf_path}? ==========")
-        print_diff(xml_to_str(ET.parse(maven_conf_path).getroot()), xml_to_str(root))
-        input(f"========== 按 Enter 更新 {maven_conf_path}, Ctrl-C 取消 ==========\n")
-        tmp_name = tempfile.NamedTemporaryFile(delete=False).name
-        os.rename(maven_conf_path, tmp_name)
+        if exists_settings:
+            print(f"========== 是否按如下 diff 更新 {maven_conf_path}? ==========")
+            print_diff(xml_to_str(ET.parse(maven_conf_path).getroot()), xml_to_str(root))
+            input(f"========== 按 Enter 更新 {maven_conf_path}, Ctrl-C 取消 ==========\n")
+            tmp_name = tempfile.NamedTemporaryFile(delete=False).name
+            os.rename(maven_conf_path, tmp_name)
         with open(maven_conf_path, "w") as fh:
             fh.write(xml_to_str(root))
-        print(f"===`======= {maven_conf_path} 已更新，原文件已备份至 {tmp_name} ==========")
+        if exists_settings:
+            print(f"========== {maven_conf_path} 已更新，原文件已备份至 {tmp_name} ==========")
+        else:
+            print(f"========== {maven_conf_path} 已写入")
 
 if __name__ == "__main__":
     lang = sys.argv[1]
     repo_type = sys.argv[2]
 
     current_system = platform.system()
-    assert current_system in ["Darwin"], f"暂不支持 {current_system}"
 
-    if current_system == "Darwin":
+    if current_system in ["Darwin", "Linux"]:
         if lang == "java":
             if repo_type == "maven":
                 process_java_maven()
                 exit(0)
 
-    print(f"暂时不支持的参数: {lang} {repo_type}，请提 issue 给我们")
+    print(f"暂时不支持的参数: {current_system} {lang} {repo_type}，请提 issue 给我们")
