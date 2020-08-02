@@ -21,15 +21,20 @@ def process_java_maven():
     assert os.path.exists(maven_conf_path), f"Maven 配置文件 {maven_conf_path} 不存在"
     tree = ET.parse(maven_conf_path)
     root = tree.getroot()
+    assert root.tag == "settings"
+    mirrors = root.find("mirrors")
     existing_mirrors = {}
-    for mirror_node in root:
+    maven_aliyun = "https://maven.aliyun.com/repository/public"
+    updated = False
+    for mirror_node in mirrors:
         id_ = mirror_node.find("id").text
         name = mirror_node.find("name").text
         url = mirror_node.find("url").text
         mirrorOf = mirror_node.find("mirrorOf").text
-        if "maven.aliyun.com" in url:
+        if "maven.aliyun.com" in url and url != maven_aliyun:
             print("检测到可能过时的 maven.aliyun.com 配置")
-            root.remove(mirror_node)
+            mirrors.remove(mirror_node)
+            updated = True
         else:
             existing_mirrors[url] = {
                 "id": id_,
@@ -37,25 +42,27 @@ def process_java_maven():
                 "mirrorOf": mirrorOf
             }
     # https://maven.aliyun.com/mvn/guide
-    if "https://maven.aliyun.com/repository/public" not in existing_mirrors:
-        mirror_node = SubElement(root, 'mirror')
+    if maven_aliyun not in existing_mirrors:
+        mirror_node = SubElement(mirrors, 'mirror')
         id_node = SubElement(mirror_node, "id")
         id_node.text = "aliyunmaven"
         name_node = SubElement(mirror_node, "name")
         name_node.text = "阿里云公共仓库"
         url_node = SubElement(mirror_node, "url")
-        url_node.text = "https://maven.aliyun.com/repository/public"
+        url_node.text = maven_aliyun
         mirrorOf_node = SubElement(mirror_node, "mirrorOf")
         mirrorOf_node.text = "*"
+        updated = True
 
-    print(f"========== 是否按如下 diff 更新 {maven_conf_path}? ==========")
-    print_diff(xml_to_str(ET.parse(maven_conf_path).getroot()), xml_to_str(root))
-    input(f"========== 按 Enter 更新 {maven_conf_path}, Ctrl-C 取消 ==========\n")
-    tmp_name = tempfile.NamedTemporaryFile(delete=False).name
-    os.rename(maven_conf_path, tmp_name)
-    with open(maven_conf_path, "w") as fh:
-        fh.write(xml_to_str(root))
-    print(f"========== {maven_conf_path} 已更新，原文件已备份至 {tmp_name} ==========")
+    if updated:
+        print(f"===`======= 是否按如下 diff 更新 {maven_conf_path}? ==========")
+        print_diff(xml_to_str(ET.parse(maven_conf_path).getroot()), xml_to_str(root))
+        input(f"========== 按 Enter 更新 {maven_conf_path}, Ctrl-C 取消 ==========\n")
+        tmp_name = tempfile.NamedTemporaryFile(delete=False).name
+        os.rename(maven_conf_path, tmp_name)
+        with open(maven_conf_path, "w") as fh:
+            fh.write(xml_to_str(root))
+        print(f"===`======= {maven_conf_path} 已更新，原文件已备份至 {tmp_name} ==========")
 
 if __name__ == "__main__":
     lang = sys.argv[1]
