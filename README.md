@@ -19,4 +19,4 @@ python3 ~/mirror-automator/update-mirror.py java maven
 ## 贡献与反馈
 
 欢迎在本项目的 [Gitee Issue](https://gitee.com/izgzhen/mirror-automator/issues/new)
-或者 [Github Issue](#) 创建反馈。欢迎使用 Pull Request 提交你的代码！
+或者 [Github Issue](https://github.com/izgzhen/mirror-automator/issues/new) 创建反馈。欢迎使用 Pull Request 提交你的代码！
