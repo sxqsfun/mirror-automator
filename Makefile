@@ -11,4 +11,4 @@ MAVEN_APACHE_ORG_JAR_URL := https://repo.maven.apache.org/maven2/$(MAVEN_EXAMPLE
 MAVEN_ALIYUN_COM_JAR_URL := https://maven.aliyun.com/repository/public/$(MAVEN_EXAMPLE_JAR)
 
 test-java-maven-quick:
-	timeout 3 wget $(MAVEN_ALIYUN_COM_JAR_URL)
+	timeout 1 wget $(MAVEN_ALIYUN_COM_JAR_URL)
